@@ -240,6 +240,26 @@ namespace FF2Browser
 												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - Volume: " + ChannelReader.Volume);
 												break;
 
+											case ChannelReader.EventTypes.VolumeFade:
+												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - VolumeFade: " + ChannelReader.Volume + " Fade: " + ChannelReader.Fade);
+												break;
+
+											case ChannelReader.EventTypes.Pan:
+												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - Pan: " + ChannelReader.Pan);
+												break;
+
+											case ChannelReader.EventTypes.PanFade:
+												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - PanFade: " + ChannelReader.Pan + " Fade: " + ChannelReader.Fade);
+												break;
+
+											case ChannelReader.EventTypes.Chorus:
+												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - Chorus: " + ChannelReader.Chorus);
+												break;
+
+											case ChannelReader.EventTypes.ReverbEcho:
+												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - Reverb: " + ChannelReader.Reverb + " Echo: " + ChannelReader.Echo);
+												break;
+
 											case ChannelReader.EventTypes.Stop:
 												e.Node.Nodes.Add(position.ToString("X4") + " " + ChannelReader.Value.ToString("X2") + " - Stop");
 												reading = false;

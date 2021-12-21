@@ -24,6 +24,9 @@ namespace FinalFantasy2
 		public static int Repeat;
 		public static int Tempo;
 		public static int Pan;
+		public static int Chorus;
+		public static int Reverb;
+		public static int Echo;
 		public static int Phase;
 		public static int Instrument;
 		public static int PercussionInstrumentOffset;
@@ -70,13 +73,14 @@ namespace FinalFantasy2
 						break;
 
 					case 0xD4:
-						EventType = EventTypes.Other;
-						Position += 1;
+						EventType = EventTypes.Chorus;
+						Chorus = Apu.Memory[Position++];
 						break;
 
 					case 0xD5:
-						EventType = EventTypes.Other;
-						Position += 2;
+						EventType = EventTypes.ReverbEcho;
+						Reverb = Apu.Memory[Position++];
+						Echo = Apu.Memory[Position++];
 						break;
 
 					case 0xD6:
@@ -122,7 +126,6 @@ namespace FinalFantasy2
 					case 0xDE:
 						EventType = EventTypes.Other;
 						Volume = Apu.Memory[Position++];
-						System.Diagnostics.Debug.WriteLine("Volume? " + Volume);
 						break;
 
 					case 0xDF:
@@ -158,14 +161,22 @@ namespace FinalFantasy2
 
 					case 0xF2:
 						EventType = EventTypes.Volume;
-						Duration = Apu.Memory[Position++] | (Apu.Memory[Position++] << 8);
+						Fade = Apu.Memory[Position++] | (Apu.Memory[Position++] << 8);
 						Volume = Apu.Memory[Position++];
-						System.Diagnostics.Debug.WriteLine("Volume: " + Volume + " " + Duration.ToString("X4"));
+
+						if (Fade != 0)
+							EventType = EventTypes.VolumeFade;
+
 						break;
 
 					case 0xF3:
-						EventType = EventTypes.Other;
-						Position += 3;
+						EventType = EventTypes.Pan;
+						Fade = Apu.Memory[Position++] | (Apu.Memory[Position++] << 8);
+						Pan = Apu.Memory[Position++];
+
+						if (Fade != 0)
+							EventType = EventTypes.PanFade;
+
 						break;
 
 					case 0xF4:
@@ -177,7 +188,6 @@ namespace FinalFantasy2
 						EventType = EventTypes.LoopExit;
 						Loop = Apu.Memory[Position++];
 						Jump = Apu.Memory[Position++] | (Apu.Memory[Position++] << 8);
-						//Position += 3;
 						break;
 
 					case 0xF1:
@@ -242,6 +252,8 @@ namespace FinalFantasy2
 			OctaveUp,
 			OctaveDown,
 			Jump,
+			Chorus,
+			ReverbEcho,
 		}
 	}
 }

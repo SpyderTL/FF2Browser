@@ -9,15 +9,25 @@ namespace FinalFantasy2
 		internal static int Song;
 		internal static int[] ChannelNote;
 		internal static int[] ChannelInstruments;
+		internal static int[] ChannelVolumes;
+		internal static int[] ChannelPans;
 		internal static int[] ChannelOffset;
 		internal static int[] ChannelDrums;
+
+		internal static int Chorus;
+		internal static int Reverb;
 
 		internal static void Start()
 		{
 			ChannelNote = Enumerable.Repeat(-1, 8).ToArray();
 			ChannelInstruments = Enumerable.Repeat(-1, 8).ToArray();
+			ChannelVolumes = Enumerable.Repeat(127, 8).ToArray();
+			ChannelPans = Enumerable.Repeat(127, 8).ToArray();
 			ChannelOffset = new int[8];
 			ChannelDrums = Enumerable.Repeat(-1, 8).ToArray();
+
+			Chorus = 32;
+			Reverb = 127;
 
 			Midi.Midi.Enable();
 
@@ -25,12 +35,23 @@ namespace FinalFantasy2
 			{
 				Midi.Midi.ControlChange(channel, 123, 0);
 				Midi.Midi.ProgramChange(channel, Midi.Midi.Patches.GrandPiano);
-				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Reverb, 127);
+				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Reverb, Reverb);
 				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Tremolo, 127);
-				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Chorus, 127);
+				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Chorus, Chorus);
 				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Detune, 127);
 				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Phaser, 127);
+
+				Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Volume, ChannelVolumes[channel]);
 			}
+
+			Midi.Midi.ControlChange(9, 123, 0);
+			Midi.Midi.ControlChange(9, Midi.Midi.Controls.Reverb, Reverb);
+			//Midi.Midi.ControlChange(9, Midi.Midi.Controls.Tremolo, 127);
+			Midi.Midi.ControlChange(9, Midi.Midi.Controls.Chorus, Chorus);
+			//Midi.Midi.ControlChange(9, Midi.Midi.Controls.Detune, 127);
+			//Midi.Midi.ControlChange(9, Midi.Midi.Controls.Phaser, 127);
+
+			Midi.Midi.ControlChange(9, Midi.Midi.Controls.Volume, 127);
 		}
 
 		internal static void Stop()
@@ -43,13 +64,45 @@ namespace FinalFantasy2
 
 		internal static void Update()
 		{
-			for (var channel = 0; channel < SongPlayer.ChannelTriggers.Length; channel++)
+			//if (SongPlayer.Reverb != Reverb)
+			//{
+			//	for (var channel = 0; channel < SongPlayer.ChannelNoteTriggers.Length; channel++)
+			//		Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Reverb, SongPlayer.Reverb >> 1);
+
+			//	Midi.Midi.ControlChange(9, Midi.Midi.Controls.Reverb, Reverb);
+
+			//	Reverb = SongPlayer.Reverb;
+			//}
+
+			//if (SongPlayer.Chorus != Chorus)
+			//{
+			//	for (var channel = 0; channel < SongPlayer.ChannelNoteTriggers.Length; channel++)
+			//		Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Chorus, SongPlayer.Chorus >> 1);
+
+			//	Midi.Midi.ControlChange(9, Midi.Midi.Controls.Reverb, Reverb);
+
+			//	Chorus = SongPlayer.Chorus;
+			//}
+
+			for (var channel = 0; channel < SongPlayer.ChannelNoteTriggers.Length; channel++)
 			{
 				if (SongPlayer.ChannelInstruments[channel] != ChannelInstruments[channel])
 				{
 					ChangeInstrument(channel);
 
 					ChannelInstruments[channel] = SongPlayer.ChannelInstruments[channel];
+				}
+
+				if (SongPlayer.ChannelVolumes[channel] != ChannelVolumes[channel])
+				{
+					Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Volume, SongPlayer.ChannelVolumes[channel] >> 1);
+					ChannelVolumes[channel] = SongPlayer.ChannelVolumes[channel];
+				}
+
+				if (SongPlayer.ChannelPans[channel] != ChannelPans[channel])
+				{
+					Midi.Midi.ControlChange(channel, Midi.Midi.Controls.Pan, SongPlayer.ChannelPans[channel] >> 1);
+					ChannelPans[channel] = SongPlayer.ChannelPans[channel];
 				}
 
 				if (SongPlayer.ChannelNotes[channel] == -1)
@@ -60,20 +113,21 @@ namespace FinalFantasy2
 						ChannelNote[channel] = -1;
 					}
 				}
-				else if (SongPlayer.ChannelTriggers[channel])
+				else if (SongPlayer.ChannelNoteTriggers[channel])
 				{
 					if (ChannelNote[channel] != -1)
 						Midi.Midi.NoteOff(channel, ChannelNote[channel], 0);
 
 					if (ChannelDrums[channel] == -1)
 					{
-						Midi.Midi.NoteOn(channel, SongPlayer.ChannelNotes[channel] + (SongPlayer.ChannelOctaves[channel] * 12) + ChannelOffset[channel], (SongPlayer.ChannelVolumes[channel] >> 2) + 64);
+						Midi.Midi.NoteOn(channel, SongPlayer.ChannelNotes[channel] + (SongPlayer.ChannelOctaves[channel] * 12) + ChannelOffset[channel], 127);
 						ChannelNote[channel] = SongPlayer.ChannelNotes[channel] + (SongPlayer.ChannelOctaves[channel] * 12) + ChannelOffset[channel];
 					}
 					else
 					{
 						// Drums
-						Midi.Midi.NoteOn(9, ChannelDrums[channel], (SongPlayer.ChannelVolumes[channel] >> 2) + 64);
+						//Midi.Midi.NoteOn(9, ChannelDrums[channel], (int)((ChannelVolumes[channel] / 255.0) * 63.0) + 64);
+						Midi.Midi.NoteOn(9, ChannelDrums[channel], ChannelVolumes[channel] >> 1);
 						Midi.Midi.NoteOff(9, ChannelDrums[channel], 0);
 					}
 				}
@@ -133,7 +187,7 @@ namespace FinalFantasy2
 							break;
 
 						case 0x41:
-							instrument = Midi.Midi.Patches.Trombone;
+							instrument = Midi.Midi.Patches.Trumpet;
 							offset = 0;
 							break;
 
@@ -280,8 +334,10 @@ namespace FinalFantasy2
 					switch (SongPlayer.ChannelInstruments[channel])
 					{
 						case 0x40:
-							//instrument = Midi.Midi.Patches.Trumpet;
-							instrument = Midi.Midi.Patches.BrassSection;
+							instrument = Midi.Midi.Patches.Trumpet;
+							//instrument = Midi.Midi.Patches.FrenchHorn;
+							//instrument = Midi.Midi.Patches.BrassSection;
+							//instrument = Midi.Midi.Patches.SynthBrass;
 							break;
 
 						case 0x41:
@@ -299,7 +355,8 @@ namespace FinalFantasy2
 							break;
 
 						case 0x44:
-							drums = Midi.Midi.Drums.BassDrum;
+							instrument = Midi.Midi.Patches.Timpani;
+							offset = -24;
 							break;
 
 						case 0x45:
@@ -334,7 +391,7 @@ namespace FinalFantasy2
 							break;
 
 						case 0x43:
-							drums = Midi.Midi.Drums.OpenHiHat;
+							drums = Midi.Midi.Drums.HiHat;
 							break;
 
 						case 0x44:
@@ -346,8 +403,8 @@ namespace FinalFantasy2
 							break;
 
 						case 0x46:
-							//instrument = Midi.Midi.Patches.PizzicatoStrings;
 							instrument = Midi.Midi.Patches.Harp;
+							//instrument = Midi.Midi.Patches.PizzicatoStrings;
 							offset = 12;
 							break;
 
